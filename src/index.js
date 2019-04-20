@@ -55,16 +55,16 @@ buttonBuild.addEventListener("click", async function() {
       labels: keys,
       datasets: [
         {
-          label: "Температура",
-          backgroundColor: "rgb(255, 20, 20)",
-          borderColor: "rgb(180, 0, 0)",
-          data: tempData
-        },
-        {
           label: "Ощущаемая температура",
           backgroundColor: "rgb(49, 166, 224)",
           borderColor: "rgb(8, 84, 122)",
           data: heatData
+        },
+        {
+          label: "Температура",
+          backgroundColor: "rgb(255, 20, 20)",
+          borderColor: "rgb(180, 0, 0)",
+          data: tempData
         }
       ]
     },

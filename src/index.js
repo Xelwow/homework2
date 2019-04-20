@@ -1,47 +1,62 @@
 import "babel-polyfill";
 import Chart from "chart.js";
 
-const currencyURL = "www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
-// const meteoURL = "/xml.meteoservice.ru/export/gismeteo/point/140.xml";
+
+//const currencyURL = "www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
+const meteoURL = "/xml.meteoservice.ru/export/gismeteo/point/140.xml";
 
 async function loadCurrency() {
-  const response = await fetch(currencyURL);
+  const response = await fetch(meteoURL);
   const xmlTest = await response.text();
   const parser = new DOMParser();
   const currencyData = parser.parseFromString(xmlTest, "text/xml");
-  // <Cube currency="USD" rate="1.1321" />
-  const rates = currencyData.querySelectorAll("Cube[currency][rate]");
-  const result = Object.create(null);
-  for (let i = 0; i < rates.length; i++) {
-    const rateTag = rates.item(i);
-    const rate = rateTag.getAttribute("rate");
-    const currency = rateTag.getAttribute("currency");
-    result[currency] = rate;
+  //<FORECAST day="19" month="04" year="2019" hour="21" tod="3" predict="0" weekday="6">
+  //   <PHENOMENA cloudiness="1" precipitation="10" rpower="0" spower="0"/>
+  //   <PRESSURE max="767" min="767"/>
+  //   <TEMPERATURE max="9" min="1"/>
+  //   <WIND min="1" max="3" direction="0"/>
+  //   <RELWET max="57" min="32"/>
+  //   <HEAT min="-4" max="-4"/>
+  //</FORECAST>
+  const forecasts = currencyData.querySelectorAll("FORECAST[day][month][year][hour]");
+  const temps = currencyData.querySelectorAll("TEMPERATURE[max]");
+  const heats = currencyData.querySelectorAll("HEAT[max]");
+  const result = [];
+  
+  for(let i = 0; i < forecasts.length; i++){
+    const day = forecasts.item(i).getAttribute("day");
+    const month = forecasts.item(i).getAttribute("month");
+    const year = forecasts.item(i).getAttribute("year");
+    const hour = forecasts.item(i).getAttribute("hour");
+    const time = hour + ":00 " + day + "." + month + "." + year;
+    const temp = temps.item(i).getAttribute("max");
+    const heat = heats.item(i).getAttribute("max");
+    //console.log(time + " | " + temp + " | " + heat);
+
+    result[i] = { time, temp, heat };
   }
-  result["EUR"] = 1;
-  // result["RANDOM"] = 1 + Math.random();
   return result;
 }
 
-function normalizeDataByCurrency(data, currency) {
-  const result = Object.create(null);
-  const value = data[currency];
-  for (const key of Object.keys(data)) {
-    result[key] = value / data[key];
+function normalizeDataByAttribute(data, attribute) {
+  
+  const result = [];
+  //console.log(data);
+  for(const key of Object.keys(data)){
+    result[key] = data[key][attribute];
   }
+  
   return result;
 }
 
 const buttonBuild = document.getElementById("btn");
 const canvasCtx = document.getElementById("out").getContext("2d");
 buttonBuild.addEventListener("click", async function() {
-  const currencyData = await loadCurrency();
-  const normalData = normalizeDataByCurrency(currencyData, "RUB");
-  const keys = Object.keys(normalData).sort((k1, k2) =>
-    compare(normalData[k1], normalData[k2])
-  );
-  const plotData = keys.map(key => normalData[key]);
-
+  const responseData = await loadCurrency();
+  const tempData = normalizeDataByAttribute(responseData, "temp");
+  const heatData = normalizeDataByAttribute(responseData, "heat");
+  const keys = normalizeDataByAttribute(responseData, "time");
+  console.log(keys);
   const chartConfig = {
     type: "line",
 
@@ -49,10 +64,16 @@ buttonBuild.addEventListener("click", async function() {
       labels: keys,
       datasets: [
         {
-          label: "Стоимость валюты в рублях",
+          label: "Температура",
           backgroundColor: "rgb(255, 20, 20)",
           borderColor: "rgb(180, 0, 0)",
-          data: plotData
+          data: tempData
+        },
+        {
+          label: "Ощущаемая температура",
+          backgroundColor: "rgb(49, 166, 224)",
+          borderColor: "rgb(8, 84, 122)",
+          data: heatData
         }
       ]
     }
@@ -70,8 +91,8 @@ buttonBuild.addEventListener("click", async function() {
   }
 });
 
-function compare(a, b) {
-  if (a > b) return 1;
-  if (a < b) return -1;
-  return 0;
-}
+// function compare(a, b) {
+//   if (a > b) return 1;
+//   if (a < b) return -1;
+//   return 0;
+// }

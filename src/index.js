@@ -2,7 +2,6 @@ import "babel-polyfill";
 import Chart from "chart.js";
 
 
-//const currencyURL = "www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
 const meteoURL = "/xml.meteoservice.ru/export/gismeteo/point/140.xml";
 
 async function loadCurrency() {
@@ -11,13 +10,8 @@ async function loadCurrency() {
   const parser = new DOMParser();
   const currencyData = parser.parseFromString(xmlTest, "text/xml");
   //<FORECAST day="19" month="04" year="2019" hour="21" tod="3" predict="0" weekday="6">
-  //   <PHENOMENA cloudiness="1" precipitation="10" rpower="0" spower="0"/>
-  //   <PRESSURE max="767" min="767"/>
-  //   <TEMPERATURE max="9" min="1"/>
-  //   <WIND min="1" max="3" direction="0"/>
-  //   <RELWET max="57" min="32"/>
-  //   <HEAT min="-4" max="-4"/>
-  //</FORECAST>
+  //<TEMPERATURE max="9" min="1"/>
+  //<HEAT min="-4" max="-4"/>
   const forecasts = currencyData.querySelectorAll("FORECAST[day][month][year][hour]");
   const temps = currencyData.querySelectorAll("TEMPERATURE[max]");
   const heats = currencyData.querySelectorAll("HEAT[max]");
@@ -31,7 +25,6 @@ async function loadCurrency() {
     const time = hour + ":00 " + day + "." + month + "." + year;
     const temp = temps.item(i).getAttribute("max");
     const heat = heats.item(i).getAttribute("max");
-    //console.log(time + " | " + temp + " | " + heat);
 
     result[i] = { time, temp, heat };
   }
@@ -41,7 +34,6 @@ async function loadCurrency() {
 function normalizeDataByAttribute(data, attribute) {
   
   const result = [];
-  //console.log(data);
   for(const key of Object.keys(data)){
     result[key] = data[key][attribute];
   }
@@ -56,7 +48,6 @@ buttonBuild.addEventListener("click", async function() {
   const tempData = normalizeDataByAttribute(responseData, "temp");
   const heatData = normalizeDataByAttribute(responseData, "heat");
   const keys = normalizeDataByAttribute(responseData, "time");
-  console.log(keys);
   const chartConfig = {
     type: "line",
 
@@ -76,6 +67,26 @@ buttonBuild.addEventListener("click", async function() {
           data: heatData
         }
       ]
+    },
+    options: {
+      scales: {
+        xAxes: [{
+          display: true,
+          scaleLabel: {
+            labelString: "Время",
+            display: true,
+            fontSize: 36
+          }
+        }],
+        yAxes : [{
+          display: true,
+          scaleLabel: {
+            labelString: "°C",
+            display: true,
+            fontSize: 36
+          }
+        }]
+      }
     }
   };
 
@@ -90,9 +101,3 @@ buttonBuild.addEventListener("click", async function() {
     window.chart = new Chart(canvasCtx, chartConfig);
   }
 });
-
-// function compare(a, b) {
-//   if (a > b) return 1;
-//   if (a < b) return -1;
-//   return 0;
-// }

@@ -44,14 +44,6 @@ module.exports = {
 		compress: true,
 		port: 9999,
 		proxy: [
-			// {
-			// 	context: ["/www.ecb.europa.eu/"],
-			// 	target: 'https://www.ecb.europa.eu',
-			// 	changeOrigin: true,
-			// 	pathRewrite: {
-			// 		'/www\\.ecb\\.europa\\.eu' : ''
-			// 	}
-			// }
 			{
 				context: ["/xml.meteoservice.ru/"],
 				target: 'https://xml.meteoservice.ru',
